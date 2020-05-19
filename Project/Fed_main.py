@@ -19,7 +19,7 @@ from torch import autograd
 from tensorboardX import SummaryWriter
 import h5py
 
-from sampling import mnist_iid, mnist_noniid, cifar_iid, cifar_noniid
+from sampling import mnist_iid, mnist_noniid
 from options import args_parser
 from Update import LocalFSVGRUpdate, LocalUpdate, LocalFedProxUpdate
 from FedNets import MLP1, CNNMnist, CNNCifar
