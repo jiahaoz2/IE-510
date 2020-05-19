@@ -22,7 +22,7 @@ import h5py
 from sampling import mnist_iid, mnist_noniid
 from options import args_parser
 from Update import LocalFSVGRUpdate, LocalUpdate, LocalFedProxUpdate
-from FedNets import MLP1, CNNMnist, CNNCifar
+from FedNets import MLP1
 from averaging import *
 
 def test(net_g, data_loader, args):
@@ -64,9 +64,9 @@ def main(loc_ep, weighted, alg):
 
     summary = SummaryWriter('local')
     args.gpu = -1  # -1 (CPU only) or GPU = 0
-    args.lr = 0.05  # 0.001 for cifar dataset
-    args.model = 'mlp'  # 'mlp' or 'cnn'
-    args.dataset = 'mnist'  # 'cifar' or 'mnist'
+    args.lr = 0.05  # 0.001, 0.01,...
+    args.model = 'mlp'  # 'mlp'
+    args.dataset = 'mnist'  # only 'mnist'
     args.num_users = 100
     args.frac = 0.1
     args.epochs = 50  # numb of global iters
