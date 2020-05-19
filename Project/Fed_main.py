@@ -139,20 +139,6 @@ def main(loc_ep, weighted, alg):
     # copy weights
     w_glob = net_glob.state_dict()
 
-    # w_size = 0
-    # for k in w_glob.keys():
-    #     size = w_glob[k].size()
-    #     if (len(size) == 1):
-    #         nelements = size[0]
-    #     else:
-    #         nelements = size[0] * size[1]
-    #     w_size += nelements * 4
-    #     # print("Size ", k, ": ",nelements*4)
-    # print("Weight Size:", w_size, " bytes")
-    # print("Weight & Grad Size:", w_size * 2, " bytes")
-    # print("Each user Training size:", 784 * 8 / 8 * args.local_bs, " bytes")
-    # print("Total Training size:", 784 * 8 / 8 * 60000, " bytes")
-    # # training
     global_grad = []
     user_grads = []
     loss_test = []
@@ -161,7 +147,6 @@ def main(loc_ep, weighted, alg):
     val_loss_pre, counter = 0, 0
     net_best = None
     val_acc_list, net_list = [], []
-    # print(dict_users.keys())
 
     rs_avg_acc, rs_avg_loss, rs_glob_acc, rs_glob_loss= [], [], [], []
 
@@ -181,7 +166,6 @@ def main(loc_ep, weighted, alg):
                 num_samples_list.append(num_samples)
                 w_locals.append(copy.deepcopy(w))
                 loss_locals.append(copy.deepcopy(loss))
-                # print("User ", idx, " Acc:", acc, " Loss:", loss)
                 acc_locals.append(copy.deepcopy(acc))
             # update global weights
             if(weighted):
@@ -215,8 +199,6 @@ def main(loc_ep, weighted, alg):
             if args.epochs % 1 == 0:
                 print('\nUsers Train Average loss:', loss_avg)
                 print('\nTrain Train Average accuracy', acc_avg)
-            # loss_test.append(sum(list_loss) / len(list_loss))
-            # acc_test.append(sum(list_acc) / len(list_acc))
 
             rs_avg_acc.append(acc_avg)
             rs_avg_loss.append(loss_avg)
@@ -233,9 +215,9 @@ def main(loc_ep, weighted, alg):
         print('training Start')
         for iter in range(args.epochs):
             w_locals, loss_locals, acc_locals, num_samples_list = [], [], [], []
-            # m = max(int(args.frac * args.num_users), 1)
-            # idxs_users = np.random.choice(range(args.num_users), m, replace=False)
-            for idx in range(args.num_users):
+            m = max(int(args.frac * args.num_users), 1)
+            idxs_users = np.random.choice(range(args.num_users), m, replace=False)
+            for idx in idxs_users:
                 if(args.local_bs>1200):
                     local = LocalFedProxUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx], tb=summary, bs=200*(4+idx)) #Batch_size bs = full data
                 else:
@@ -245,7 +227,6 @@ def main(loc_ep, weighted, alg):
                 num_samples_list.append(num_samples)
                 w_locals.append(copy.deepcopy(w))
                 loss_locals.append(copy.deepcopy(loss))
-                # print("User ", idx, " Acc:", acc, " Loss:", loss)
                 acc_locals.append(copy.deepcopy(acc))
                 print('-----')
             
@@ -329,7 +310,6 @@ def main(loc_ep, weighted, alg):
                 loss_locals.append(copy.deepcopy(loss))
                 acc_locals.append(copy.deepcopy(acc))
 
-            # w_t = net_glob.state_dict()
             w_glob = average_FSVRG_weights(w_locals, args.ag_scalar, copy.deepcopy(net_glob), args.gpu)
 
             # copy weight to net_glob
@@ -345,7 +325,6 @@ def main(loc_ep, weighted, alg):
                 list_acc.append(acc)
                 list_loss.append(loss)
 
-            # print("\nTest Global Weight:", list_acc)
             print("\nEpoch: {}, Global test loss {}, Global test acc: {:.2f}%".format(iter,
                                                                                       sum(list_loss) / len(list_loss),
                                                                                       100. * sum(list_acc) / len(
@@ -366,20 +345,6 @@ def main(loc_ep, weighted, alg):
         alg=alg+'1'
     simple_save_data(loc_ep, alg, rs_avg_acc, rs_avg_loss, rs_glob_acc, rs_glob_loss)
     plot_rs(loc_ep, alg)
-
-    # # plot loss curve
-    # plt.figure(1)
-    # plt.subplot(121)
-    # plt.plot(range(len(loss_test)), loss_test)
-    # plt.ylabel('train_loss')
-    # plt.xlabel('num_epoches')
-    # plt.subplot(122)
-    # plt.plot(range(len(acc_test)), acc_test)
-    # plt.ylabel('train_accuracy')
-    # plt.xlabel('num_epoches')
-    # plt.savefig(
-    #     '../save/new_fed_{}_{}_{}_{}_C{}_iid{}.png'.format(args.algorithm, args.dataset, args.model, args.epochs,
-    #                                                        args.frac, args.iid))
 
 
 def simple_save_data(loc_ep,alg,rs_avg_acc, rs_avg_loss, rs_glob_acc, rs_glob_loss):
@@ -486,29 +451,9 @@ def plot_summary():
 
 
 if __name__ == '__main__':
-   # local_eps = range(5, 45, 5)
-   # numb_of_glob_iters = []
-   # for k in local_eps:
-   #     print("\n== TESTING with local_eps=", k)
-   #     numb_of_glob_iters.append(main(k))
-   # print("-- FINISH --")
-   # print(numb_of_glob_iters)
-
     SUMARRY = False
     if(SUMARRY):
         plot_summary()
     else:
        main(loc_ep=5, weighted=False, alg='fedavg') #'fedavg', 'fedprox', 'fsvgr'
        print("-- FINISH -- :",)
-
-
-# # testing
-# list_acc, list_loss = [], []
-# net_glob.eval()
-# for c in tqdm(range(args.num_users)):
-#     net_local = LocalFSVGRUpdate(args=args, dataset=dataset_train, idxs=dict_users[c], tb=summary)
-#     acc, loss = net_local.test(net=net_glob)
-#     list_acc.append(acc)
-#     list_loss.append(loss)
-# print("average acc: {:.2f}%".format(100.*sum(list_acc)/len(list_acc)))
-#
